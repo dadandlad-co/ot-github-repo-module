@@ -1,0 +1,29 @@
+name: "Update Documentation"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '**.tf'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
+
+      - name: Render terraform docs inside the README.md and push changes back to PR
+        uses: terraform-docs/gh-actions@v1
+        with:
+          working-dir: .
+          output-file: README.md
+          output-method: inject
+          git-push: ${{ github.event_name == 'pull_request' }}
+          git-commit-message: "docs: Update module documentation"
