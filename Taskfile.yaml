@@ -1,0 +1,134 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+# https://taskfile.dev
+
+version: "3"
+
+dotenv: [".env"]
+env:
+  GIT_SSH_COMMAND: "{{.GIT_SSH_COMMAND}}"
+  TF_DATA_DIR: "{{.TF_DATA_DIR | default \".terraform\"}}"
+
+vars:
+  CURRENT_DATE:
+    sh: date +"%Y-%m-%dT%H:%M:%S%Z"
+  MODULE_NAME: "tf-github-github-repository"
+  ORGANIZATION: "dadandlad-co"
+
+tasks:
+  default:
+    desc: Run the pre-commit hooks and validate module
+    cmds:
+      - "direnv allow"
+      - task: pre
+      - task: validate
+
+  #----------------------------------------------------------------------------
+  # Security and Quality
+  #----------------------------------------------------------------------------
+
+  hog:
+    desc: Scan for secrets using trufflehog
+    cmds:
+      - trufflehog git file://. --since-commit HEAD~10 --only-verified --fail
+    silent: false
+
+  pre:
+    desc: Run the pre-commit hooks
+    cmds:
+      - pre-commit autoupdate
+      - pre-commit run -a
+
+  lint:
+    desc: Run OpenTofu linting
+    cmds:
+      - tflint --init
+      - tflint --recursive
+      - tfsec .
+
+  #----------------------------------------------------------------------------
+  # Git Operations
+  #----------------------------------------------------------------------------
+
+  push:
+    desc: Push the changes to the remote repository
+    deps: [clean]
+    cmds:
+      - git add .
+      - git commit -m "{{.CURRENT_DATE}}"
+      - git push
+    silent: true
+
+  tag:
+    desc: Push the changes to the remote repository
+    cmds:
+      - git push
+      - git tag -s {{.CLI_ARGS}} -m "{{.CLI_ARGS}}"
+      - git push --tags
+
+  clean:
+    desc: Clean up the repository
+    silent: true
+    cmds:
+      - pre-commit clean >/dev/null 2>&1
+      - if [ -d 'boilr' ]; then find boilr -type f -name 'README.md' | xargs rm -r >/dev/null 2>&1; else exit 0; fi
+      - |
+        find . -name '*.HOLD' -o \
+             -type d -name '.terraform' -o \
+             -type f -name '*.tfstate*' -o \
+             -type f -name '.terraform.lock.hcl' \
+        | xargs -P 4 -n 1 rm -rf >/dev/null 2>&1
+      - printf "Clean done\n"
+
+  #----------------------------------------------------------------------------
+  # OpenTofu Operations
+  #----------------------------------------------------------------------------
+
+  validate:
+    desc: Validate OpenTofu configuration
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - tofu fmt -check -recursive .
+      - tofu validate
+    env:
+      TF_DATA_DIR: "{{.TF_DATA_DIR}}"
+
+  fmt:
+    desc: Format OpenTofu files
+    cmds:
+      - tofu fmt -recursive .
+
+  init:
+    desc: Initialize OpenTofu in examples
+    cmds:
+      - for: [basic, advanced, complete]
+        cmd: |
+          cd examples/{{.ITEM}}
+          tofu init
+          tofu validate
+
+  plan:
+    desc: Plan OpenTofu examples
+    deps: [init]
+    cmds:
+      - for: [basic, advanced, complete] 
+        cmd: |
+          cd examples/{{.ITEM}}
+          tofu plan
+
+  #----------------------------------------------------------------------------
+  # Testing
+  #----------------------------------------------------------------------------
+
+  test:
+    desc: Run OpenTofu tests
+    deps: [validate]
+    cmds:
+      - tofu test -verbose
+      - task: test-examples
+
+  test-examples:
+    desc: Test all examples
+    cmds:
+      - for: [basic, advanced, complete]
+        cmd: |
+          echo "Testing

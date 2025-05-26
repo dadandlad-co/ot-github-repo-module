@@ -1,0 +1,78 @@
+# OpenTofu/Terraform files
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Environment files
+.env
+.env.local
+.env.*.local
+# Keep .envrc for direnv users
+# .envrc
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.HOLD
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files
+test_*.tf
+*_test.go
+
+# Security
+*.pem
+*.key
+secrets.yaml
+secrets.yml
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Node modules (if using JS tooling)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Documentation build
+site/
+docs/_build/

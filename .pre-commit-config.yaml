@@ -1,0 +1,122 @@
+# See https://pre-commit.com for more information
+repos:
+  # General pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-executables-have-shebangs
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # OpenTofu/Terraform specific hooks
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.99.0
+    hooks:
+      - id: terraform_fmt
+        name: OpenTofu fmt
+        entry: tofu fmt
+        language: system
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+      - id: terraform_validate
+        name: OpenTofu validate
+        entry: tofu validate
+        language: system
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+        pass_filenames: false
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+      - id: terraform_tflint
+        name: OpenTofu tflint
+        entry: tflint
+        language: system
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+        args:
+          - --config=.tflint.hcl
+      - id: terraform_tfsec
+        name: OpenTofu tfsec
+        entry: tfsec
+        language: system
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+        args:
+          - --config-file=.tfsec.yml
+          - --soft-fail
+      - id: terraform_docs
+        name: OpenTofu docs
+        entry: terraform-docs
+        language: system
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+        args:
+          - markdown
+          - table
+          - --output-file
+          - README.md
+          - --output-mode
+          - inject
+          - .
+
+  # Security scanning
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.88.34
+    hooks:
+      - id: trufflehog
+        name: TruffleHog
+        entry: trufflehog filesystem --directory=. --only-verified --fail
+        language: system
+        stages: [pre-commit]
+
+  # YAML/JSON linting
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint.yml]
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        args: [--config=.markdownlint.yml]
+
+  # Shell script linting
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        args: [-e, SC1091]
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint
+        args: [--config=.hadolint.yaml]
+
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+
+# Global configuration
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '3.0.0'
