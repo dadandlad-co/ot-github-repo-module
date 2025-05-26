@@ -40,7 +40,7 @@ variable "homepage_url" {
   type        = string
   default     = null
   validation {
-    condition = var.homepage_url == null || can(regex("^https?://[\\w.-]+(?:\\.[\\w\\.-]+)+[\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]*$", var.homepage_url))
+    condition     = var.homepage_url == null || can(regex("^https?://[\\w.-]+(?:\\.[\\w\\.-]+)+[\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]*$", var.homepage_url))
     error_message = "Invalid homepage URL format. Must be a valid HTTP or HTTPS URL."
   }
 }

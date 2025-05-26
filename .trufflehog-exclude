@@ -1,0 +1,10 @@
+# TruffleHog exclusions
+.env
+.env.*
+.envrc.local
+*.key
+*.pem
+examples/*/terraform.tfvars
+examples/*/terraform.tfvars.json
+.terraform/
+node_modules/

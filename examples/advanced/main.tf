@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------
-# Advanced Example - Repository with Branch Protection and Teams
+# Advanced Example - Repository with Branch Protection and Teams (FIXED)
 #----------------------------------------------------------------------------
 
 # Data sources for teams (replace with your actual team slugs)
@@ -18,7 +18,7 @@ module "advanced_repository" {
   name        = "advanced-example-repo"
   description = "Advanced example with branch protection and team access"
   visibility  = "private"
-  
+
   homepage_url = "https://docs.example.com/advanced-repo"
 
   # Repository features
@@ -41,7 +41,7 @@ module "advanced_repository" {
 
   # Security settings
   vulnerability_alerts = true
-  
+
   security_and_analysis = {
     secret_scanning = {
       status = "enabled"
@@ -62,13 +62,13 @@ module "advanced_repository" {
     "main-protection" = {
       target      = "branch"
       enforcement = "active"
-      
+
       conditions = {
         ref_name = {
           include = ["main", "master"]
         }
       }
-      
+
       rules = {
         pull_request = {
           required_approving_review_count   = 2
@@ -77,7 +77,7 @@ module "advanced_repository" {
           require_last_push_approval        = false
           required_review_thread_resolution = true
         }
-        
+
         required_status_checks = {
           required_checks = [
             {
@@ -89,36 +89,36 @@ module "advanced_repository" {
           ]
           strict_required_status_checks_policy = true
         }
-        
+
         commit_message_pattern = {
           pattern  = "^(feat|fix|docs|style|refactor|test|chore)(\\(.+\\))?: .+"
           operator = "regex"
           name     = "Conventional Commits"
         }
-        
+
         required_signatures     = false
         required_linear_history = true
         deletion                = true
         non_fast_forward        = true
       }
     }
-    
+
     "release-protection" = {
       target      = "branch"
       enforcement = "active"
-      
+
       conditions = {
         ref_name = {
           include = ["release/*", "hotfix/*"]
         }
       }
-      
+
       rules = {
         pull_request = {
           required_approving_review_count = 1
           require_code_owner_review       = true
         }
-        
+
         required_status_checks = {
           required_checks = [
             {
@@ -127,7 +127,7 @@ module "advanced_repository" {
           ]
           strict_required_status_checks_policy = true
         }
-        
+
         deletion = true
       }
     }
@@ -139,40 +139,40 @@ module "advanced_repository" {
       content = <<-EOF
         # Global code owners
         * @dadandlad-co/maintainers
-        
+
         # CI/CD files
         .github/ @dadandlad-co/platform-team
-        
+
         # Documentation
         docs/ @dadandlad-co/technical-writers @dadandlad-co/maintainers
         *.md @dadandlad-co/technical-writers
       EOF
-      
+
       commit_message = "Add CODEOWNERS file"
     }
-    
+
     ".github/pull_request_template.md" = {
       content = <<-EOF
         ## Description
         Brief description of the changes in this PR.
-        
+
         ## Type of Change
         - [ ] Bug fix
         - [ ] New feature
         - [ ] Breaking change
         - [ ] Documentation update
-        
+
         ## Testing
         - [ ] Tests pass locally
         - [ ] Added new tests for new functionality
-        
+
         ## Checklist
         - [ ] Code follows the project's style guidelines
         - [ ] Self-review completed
         - [ ] Documentation updated if necessary
         - [ ] No new warnings introduced
       EOF
-      
+
       commit_message = "Add pull request template"
     }
   }
@@ -183,30 +183,30 @@ module "advanced_repository" {
       wait_timer          = 0
       can_admins_bypass   = true
       prevent_self_review = false
-      
+
       deployment_branch_policy = {
         protected_branches = true
       }
-      
+
       variables = {
         "ENVIRONMENT" = "staging"
         "LOG_LEVEL"   = "debug"
       }
     }
-    
+
     "production" = {
       wait_timer          = 30
       can_admins_bypass   = false
       prevent_self_review = true
-      
+
       reviewers = {
         teams = [data.github_team.maintainers.id]
       }
-      
+
       deployment_branch_policy = {
         protected_branches = true
       }
-      
+
       variables = {
         "ENVIRONMENT" = "production"
         "LOG_LEVEL"   = "info"

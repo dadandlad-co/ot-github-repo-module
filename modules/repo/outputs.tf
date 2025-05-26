@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------
-# outputs.tf - OpenTofu GitHub Repository Module
+# outputs.tf - OpenTofu GitHub Repository Module (FIXED)
 #----------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------
@@ -31,9 +31,10 @@ output "repository_visibility" {
   value       = github_repository.repository.visibility
 }
 
+# FIXED: Get default branch from branch_default resource or fallback to "main"
 output "repository_default_branch" {
   description = "The default branch of the created repository."
-  value       = github_repository.repository.default_branch
+  value       = var.default_branch != "main" && length(github_branch_default.default) > 0 ? github_branch_default.default[0].branch : var.default_branch
 }
 
 #----------------------------------------------------------------------------
@@ -86,7 +87,7 @@ output "repository_archived" {
 
 output "repository_private" {
   description = "Whether the repository is private."
-  value       = github_repository.repository.private
+  value       = github_repository.repository.visibility == "private"
 }
 
 #----------------------------------------------------------------------------
@@ -142,7 +143,7 @@ output "collaborator_permissions" {
 output "branches" {
   description = "Information about the branches created for the repository."
   value = {
-    default_branch = github_repository.repository.default_branch
+    default_branch = var.default_branch != "main" && length(github_branch_default.default) > 0 ? github_branch_default.default[0].branch : var.default_branch
     protected_branches = [
       for branch_name, protection_config in var.branch_protection :
       branch_name
@@ -164,7 +165,7 @@ output "branch_protection_rules" {
       required_status_checks_contexts = try(rule.required_status_checks[0].contexts, null)
       enforce_admins                  = rule.enforce_admins
       allows_deletions                = rule.allows_deletions
-      allows_force_pushes            = rule.allows_force_pushes
+      allows_force_pushes             = rule.allows_force_pushes
     }
   }
 }
@@ -239,7 +240,7 @@ output "environments" {
 }
 
 #----------------------------------------------------------------------------
-# Repository Files Information  
+# Repository Files Information
 #----------------------------------------------------------------------------
 
 output "repository_files" {
@@ -262,9 +263,9 @@ output "repository_files" {
 output "security_and_analysis" {
   description = "Security and analysis settings for the repository."
   value = var.security_and_analysis != null ? {
-    advanced_security_enabled           = try(var.security_and_analysis.advanced_security.status == "enabled", false)
-    secret_scanning_enabled            = try(var.security_and_analysis.secret_scanning.status == "enabled", false)
-    secret_scanning_push_protection    = try(var.security_and_analysis.secret_scanning_push_protection.status == "enabled", false)
+    advanced_security_enabled       = try(var.security_and_analysis.advanced_security.status == "enabled", false)
+    secret_scanning_enabled         = try(var.security_and_analysis.secret_scanning.status == "enabled", false)
+    secret_scanning_push_protection = try(var.security_and_analysis.secret_scanning_push_protection.status == "enabled", false)
   } : null
 }
 

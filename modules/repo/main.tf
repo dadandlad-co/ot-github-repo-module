@@ -24,6 +24,9 @@ locals {
   has_template = var.template != null
   # Merge default and custom topics, remove duplicates
   all_topics = distinct(concat(var.default_topics, var.topics))
+
+  # Convert sensitive map to non-sensitive keys for for_each
+  repository_secret_keys = var.repository_secrets != null ? keys(var.repository_secrets) : []
 }
 
 #----------------------------------------------------------------------------
@@ -42,20 +45,20 @@ resource "github_repository" "repository" {
   gitignore_template = local.has_template ? null : var.gitignore_template
   license_template   = local.has_template ? null : var.license_template
 
-  allow_merge_commit     = var.allow_merge_commit
-  allow_squash_merge     = var.allow_squash_merge
-  allow_rebase_merge     = var.allow_rebase_merge
-  allow_auto_merge       = var.allow_auto_merge
+  allow_merge_commit          = var.allow_merge_commit
+  allow_squash_merge          = var.allow_squash_merge
+  allow_rebase_merge          = var.allow_rebase_merge
+  allow_auto_merge            = var.allow_auto_merge
   squash_merge_commit_title   = var.squash_merge_commit_title
   squash_merge_commit_message = var.squash_merge_commit_message
   merge_commit_title          = var.merge_commit_title
   merge_commit_message        = var.merge_commit_message
 
-  vulnerability_alerts                = var.vulnerability_alerts
-  delete_branch_on_merge             = var.delete_branch_on_merge
-  allow_update_branch                = var.allow_update_branch
-  web_commit_signoff_required        = var.web_commit_signoff_required
-  
+  vulnerability_alerts        = var.vulnerability_alerts
+  delete_branch_on_merge      = var.delete_branch_on_merge
+  allow_update_branch         = var.allow_update_branch
+  web_commit_signoff_required = var.web_commit_signoff_required
+
   # Archive settings
   archived           = var.archived
   archive_on_destroy = var.archive_on_destroy
@@ -98,7 +101,7 @@ resource "github_repository" "repository" {
         branch = pages.value.source.branch
         path   = pages.value.source.path
       }
-      cname = pages.value.cname
+      cname      = pages.value.cname
       build_type = pages.value.build_type
     }
   }
@@ -154,12 +157,10 @@ resource "github_branch" "branches" {
   branch        = each.key
   source_branch = var.default_branch
 
-  depends_on = [
-    github_repository.repository,
-    github_branch_default.default
-  ]
+  depends_on = [github_repository.repository]
 }
 
+# Fix: Use separate resource for setting default branch
 resource "github_branch_default" "default" {
   count      = var.default_branch != "main" ? 1 : 0
   repository = github_repository.repository.name
@@ -169,7 +170,7 @@ resource "github_branch_default" "default" {
 }
 
 #----------------------------------------------------------------------------
-# Branch Protection (Legacy)
+# Branch Protection (Legacy) - FIXED
 #----------------------------------------------------------------------------
 
 resource "github_branch_protection" "protection" {
@@ -180,6 +181,7 @@ resource "github_branch_protection" "protection" {
   required_linear_history         = lookup(each.value, "required_linear_history", null)
   require_conversation_resolution = lookup(each.value, "require_conversation_resolution", null)
   require_signed_commits          = lookup(each.value, "require_signed_commits", null)
+
   required_status_checks {
     strict   = lookup(each.value, "strict_status_checks", true)
     contexts = lookup(each.value, "status_check_contexts", [])
@@ -192,15 +194,16 @@ resource "github_branch_protection" "protection" {
       required_approving_review_count = lookup(each.value, "required_approving_review_count", 1)
       require_code_owner_reviews      = lookup(each.value, "require_code_owner_reviews", false)
       require_last_push_approval      = lookup(each.value, "require_last_push_approval", false)
-      restrict_review_dismissals      = lookup(each.value, "restrict_review_dismissals", false)
-      dismissal_restrictions          = lookup(each.value, "dismissal_restrictions", [])
+      # REMOVED: restrict_review_dismissals - not supported
+      # REMOVED: dismissal_restrictions - use dismissal_restrictions at top level
     }
   }
 
-  enforce_admins         = lookup(each.value, "enforce_admins", false)
-  allows_deletions       = lookup(each.value, "allows_deletions", false)
-  allows_force_pushes    = lookup(each.value, "allows_force_pushes", false)
-  push_restrictions      = lookup(each.value, "push_restrictions", [])
+  # FIXED: Use correct attribute names
+  enforce_admins      = lookup(each.value, "enforce_admins", false)
+  allows_deletions    = lookup(each.value, "allows_deletions", false)
+  allows_force_pushes = lookup(each.value, "allows_force_pushes", false)
+  # REMOVED: push_restrictions - not supported in current provider version
 
   depends_on = [
     github_branch.branches,
@@ -326,7 +329,7 @@ resource "github_repository_file" "files" {
 #----------------------------------------------------------------------------
 
 resource "github_repository_deploy_key" "deploy_keys" {
-  for_each = var.deploy_keys
+  for_each   = var.deploy_keys
   title      = each.key
   repository = github_repository.repository.name
   key        = each.value.key
@@ -338,7 +341,7 @@ resource "github_repository_deploy_key" "deploy_keys" {
 #----------------------------------------------------------------------------
 
 resource "github_repository_webhook" "webhooks" {
-  for_each = var.webhooks
+  for_each   = var.webhooks
   repository = github_repository.repository.name
 
   configuration {
@@ -391,9 +394,9 @@ resource "github_actions_environment_secret" "environment_secrets" {
     for env_name, env_config in var.environments : {
       for secret_name, secret_value in lookup(env_config, "secrets", {}) :
       "${env_name}/${secret_name}" => {
-        environment   = env_name
-        secret_name   = secret_name
-        secret_value  = secret_value
+        environment  = env_name
+        secret_name  = secret_name
+        secret_value = secret_value
       }
     }
   ]...)
@@ -423,7 +426,7 @@ resource "github_actions_environment_variable" "environment_variables" {
   ]...)
 
   repository    = github_repository.repository.name
-  environment   = each.value.environment  
+  environment   = each.value.environment
   variable_name = each.value.var_name
   value         = each.value.var_value
 
@@ -431,14 +434,14 @@ resource "github_actions_environment_variable" "environment_variables" {
 }
 
 #----------------------------------------------------------------------------
-# Repository Secrets
+# Repository Secrets - FIXED for sensitive values
 #----------------------------------------------------------------------------
 
 resource "github_actions_secret" "repository_secrets" {
-  for_each        = var.repository_secrets
+  for_each        = toset(local.repository_secret_keys)
   repository      = github_repository.repository.name
   secret_name     = each.key
-  plaintext_value = each.value
+  plaintext_value = var.repository_secrets[each.key]
 }
 
 #----------------------------------------------------------------------------

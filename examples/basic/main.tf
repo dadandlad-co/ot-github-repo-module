@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------
-# Basic Example - Simple GitHub Repository
+# Basic Example - Simple GitHub Repository (FIXED)
 #----------------------------------------------------------------------------
 
 module "basic_repository" {

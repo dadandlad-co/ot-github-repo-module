@@ -4,13 +4,13 @@
 config {
   # Enable module inspection
   module = true
-  
+
   # Disable default rules that are not applicable to OpenTofu
   disabled_by_default = false
-  
+
   # Set the format of the output
   format = "compact"
-  
+
   # Enable colored output
   force = false
 }
@@ -92,7 +92,7 @@ rule "terraform_variable_separate_type_description" {
   enabled = true
 }
 
-# Output validation rules  
+# Output validation rules
 rule "terraform_output_separate_description" {
   enabled = true
 }

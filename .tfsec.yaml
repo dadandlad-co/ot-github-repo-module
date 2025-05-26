@@ -1,0 +1,44 @@
+# tfsec configuration for OpenTofu GitHub Repository Module
+severity: MEDIUM
+exclude_downloaded_modules: true
+exclude_paths:
+  - ".terraform/"
+  - "examples/"
+
+# Custom checks configuration
+checks:
+  # GitHub specific rules
+  - name: "github-repository-encrypted"
+    description: "Ensure repository vulnerability alerts are enabled"
+    severity: "HIGH"
+
+  # OpenTofu/Terraform general rules
+  - name: "general-secrets-sensitive-in-variable"
+    description: "Ensure sensitive variables are marked as sensitive"
+    severity: "HIGH"
+
+# Exclude rules that don't apply to GitHub provider
+exclude_rules:
+  - AWS001
+  - AWS002
+  - AWS003
+  - GCP001
+  - GCP002
+  - AZU001
+  - AZU002
+
+# Include GitHub-specific rules
+include_rules:
+  - GIT001  # GitHub token should not be hardcoded
+
+# Minimum severity level
+minimum_severity: MEDIUM
+
+# Output format
+format: lovely
+
+# Include ignored findings in output
+include_ignored: false
+
+# Include passed findings in output
+include_passed: false

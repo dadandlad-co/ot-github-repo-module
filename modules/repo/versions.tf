@@ -12,8 +12,3 @@ terraform {
     }
   }
 }
-
-# OpenTofu experiments (if needed)
-terraform {
-  experiments = []
-}

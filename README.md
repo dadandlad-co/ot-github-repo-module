@@ -23,8 +23,8 @@ This module provides complete GitHub repository management including:
 ### Branch Management
 - Custom default branch configuration
 - Additional branch creation
-- Legacy branch protection rules
-- Modern repository rulesets (recommended)
+- **Modern repository rulesets (recommended)**
+- Legacy branch protection rules (deprecated)
 
 ### Access Control
 - Team permissions management
@@ -54,16 +54,16 @@ module "basic_repo" {
   name        = "my-awesome-project"
   description = "An awesome project built with OpenTofu"
   visibility  = "private"
-  
+
   topics = ["api", "microservice"]
-  
+
   has_issues   = true
   has_projects = true
   has_wiki     = false
 }
 ```
 
-### Repository with Branch Protection
+### Repository with Modern Branch Protection (Repository Rulesets)
 
 ```hcl
 module "protected_repo" {
@@ -80,20 +80,20 @@ module "protected_repo" {
     "main-protection" = {
       target      = "branch"
       enforcement = "active"
-      
+
       conditions = {
         ref_name = {
           include = ["main", "master"]
         }
       }
-      
+
       rules = {
         pull_request = {
           required_approving_review_count = 2
           require_code_owner_review       = true
           require_last_push_approval      = true
         }
-        
+
         required_status_checks = {
           required_checks = [
             {
@@ -105,7 +105,7 @@ module "protected_repo" {
           ]
           strict_required_status_checks_policy = true
         }
-        
+
         required_signatures = true
         deletion = true
       }
@@ -134,36 +134,36 @@ module "deployment_repo" {
       wait_timer          = 0
       can_admins_bypass   = true
       prevent_self_review = false
-      
+
       secrets = {
         "DATABASE_URL" = "postgresql://dev-db:5432/myapp"
         "API_KEY"      = var.dev_api_key
       }
-      
+
       variables = {
         "ENVIRONMENT" = "development"
         "LOG_LEVEL"   = "debug"
       }
     }
-    
+
     "production" = {
       wait_timer          = 30
       can_admins_bypass   = false
       prevent_self_review = true
-      
+
       reviewers = {
         teams = [data.github_team.platform_team.id]
       }
-      
+
       deployment_branch_policy = {
         protected_branches = true
       }
-      
+
       secrets = {
         "DATABASE_URL" = var.prod_database_url
         "API_KEY"      = var.prod_api_key
       }
-      
+
       variables = {
         "ENVIRONMENT" = "production"
         "LOG_LEVEL"   = "info"
@@ -202,15 +202,15 @@ module "templated_repo" {
       content = <<-EOF
         # Global owners
         * @dadandlad-co/platform-team
-        
+
         # API specific
         /api/ @dadandlad-co/api-team
-        
+
         # Infrastructure
         /terraform/ @dadandlad-co/platform-team
         /.github/ @dadandlad-co/platform-team
       EOF
-      
+
       commit_message = "Add CODEOWNERS file"
     }
   }
@@ -251,15 +251,15 @@ module "complete_repo" {
   allow_squash_merge = true
   allow_rebase_merge = false
   allow_auto_merge   = true
-  
+
   delete_branch_on_merge = true
-  
+
   squash_merge_commit_title   = "PR_TITLE"
   squash_merge_commit_message = "COMMIT_MESSAGES"
 
   # Security
   vulnerability_alerts = true
-  
+
   security_and_analysis = {
     secret_scanning = {
       status = "enabled"
@@ -280,18 +280,18 @@ module "complete_repo" {
     "external-consultant" = "pull"
   }
 
-  # Branch protection with rulesets
+  # Modern branch protection with repository rulesets
   repository_rulesets = {
     "main-branch-rules" = {
       target      = "branch"
       enforcement = "active"
-      
+
       conditions = {
         ref_name = {
           include = ["main"]
         }
       }
-      
+
       rules = {
         pull_request = {
           required_approving_review_count   = 2
@@ -300,7 +300,7 @@ module "complete_repo" {
           require_last_push_approval        = true
           required_review_thread_resolution = true
         }
-        
+
         required_status_checks = {
           required_checks = [
             { context = "continuous-integration" },
@@ -309,13 +309,13 @@ module "complete_repo" {
           ]
           strict_required_status_checks_policy = true
         }
-        
+
         commit_message_pattern = {
           pattern  = "^(feat|fix|docs|style|refactor|test|chore)(\\(.+\\))?: .{1,50}"
           operator = "regex"
           name     = "Conventional Commits"
         }
-        
+
         required_signatures     = true
         required_linear_history = true
         deletion                = true
@@ -355,38 +355,38 @@ module "complete_repo" {
       wait_timer          = 5
       can_admins_bypass   = true
       prevent_self_review = false
-      
+
       deployment_branch_policy = {
         protected_branches = true
       }
-      
+
       secrets = {
         "DATABASE_URL" = var.staging_database_url
       }
-      
+
       variables = {
         "ENVIRONMENT" = "staging"
       }
     }
-    
+
     "production" = {
       wait_timer          = 30
       can_admins_bypass   = false
       prevent_self_review = true
-      
+
       reviewers = {
         teams = [data.github_team.platform_team.id]
       }
-      
+
       deployment_branch_policy = {
         protected_branches     = true
         custom_branch_policies = false
       }
-      
+
       secrets = {
         "DATABASE_URL" = var.production_database_url
       }
-      
+
       variables = {
         "ENVIRONMENT" = "production"
       }
@@ -411,7 +411,7 @@ module "complete_repo" {
       events       = ["push", "pull_request", "release"]
       active       = true
     }
-    
+
     "slack-notifications" = {
       url          = var.slack_webhook_url
       content_type = "json"
@@ -468,8 +468,10 @@ module "complete_repo" {
 | vulnerability_alerts | Enable security alerts | `bool` | `true` |
 | topics | List of topics to apply | `list(string)` | `[]` |
 | default_topics | Default topics always applied | `list(string)` | `["opentofu", "terraform", "infrastructure"]` |
+| repository_rulesets | Configure repository rulesets (modern branch protection) | `map(object)` | `{}` |
+| branch_protection | Configure branch protection rules (legacy, deprecated) | `map(object)` | `{}` |
 
-For a complete list of inputs, see the [variables.tf](./variables.tf) file.
+For a complete list of inputs, see the [variables.tf](./terraform/repo/variables.tf) file.
 
 ## Outputs
 
@@ -484,14 +486,14 @@ For a complete list of inputs, see the [variables.tf](./variables.tf) file.
 | ssh_clone_url | SSH clone URL |
 | http_clone_url | HTTP clone URL |
 
-For a complete list of outputs, see the [outputs.tf](./outputs.tf) file.
+For a complete list of outputs, see the [outputs.tf](./terraform/repo/outputs.tf) file.
 
 ## Examples
 
 See the [examples/](./examples/) directory for complete working examples:
 
 - [Basic Repository](./examples/basic/) - Simple repository setup
-- [Advanced Repository](./examples/advanced/) - Repository with branch protection and teams
+- [Advanced Repository](./examples/advanced/) - Repository with rulesets and teams
 - [Complete Repository](./examples/complete/) - All features enabled
 
 ## Testing
@@ -501,6 +503,65 @@ This module includes OpenTofu native tests. Run them with:
 ```bash
 task test
 ```
+
+## Migration from Legacy Branch Protection
+
+**⚠️ Important: Legacy `branch_protection` is deprecated. Use `repository_rulesets` instead.**
+
+The GitHub provider is moving away from legacy branch protection in favor of repository rulesets, which provide more flexibility and features.
+
+### Legacy (deprecated)
+```hcl
+branch_protection = {
+  "main" = {
+    require_pull_request_reviews    = true
+    required_approving_review_count = 2
+    require_code_owner_reviews      = true
+  }
+}
+```
+
+### Modern (recommended)
+```hcl
+repository_rulesets = {
+  "main-protection" = {
+    target      = "branch"
+    enforcement = "active"
+
+    conditions = {
+      ref_name = {
+        include = ["main"]
+      }
+    }
+
+    rules = {
+      pull_request = {
+        required_approving_review_count = 2
+        require_code_owner_review       = true
+      }
+    }
+  }
+}
+```
+
+### Benefits of Repository Rulesets
+
+- **More Granular Control**: Target specific branches with patterns
+- **Additional Rules**: Commit message patterns, author email validation
+- **Better Performance**: More efficient API calls
+- **Future-Proof**: GitHub's recommended approach
+- **Enhanced Features**: Tag protection, creation/deletion rules
+
+## Breaking Changes in Latest Version
+
+### Fixed Issues
+- **Removed invalid branch protection arguments**: `restrict_review_dismissals` and `push_restrictions`
+- **Fixed sensitive variables in for_each**: Repository secrets now handle sensitivity correctly
+- **Deprecated attribute fixes**: Replaced `github_repository.default_branch` and `github_repository.private`
+
+### Migration Required
+If you're using the legacy `branch_protection` variable, you should migrate to `repository_rulesets`. The module still supports both,
+but `branch_protection` will be removed in a future major version. **Please migrate as soon as possible.**
 
 ## Development
 
@@ -533,44 +594,6 @@ task clean
 3. Make your changes
 4. Run `task pre` to validate
 5. Submit a pull request
-
-## Migration from Legacy Branch Protection
-
-If you're using the legacy `branch_protection` variable, consider migrating to `repository_rulesets` for better functionality:
-
-### Legacy (deprecated):
-```hcl
-branch_protection = {
-  "main" = {
-    require_pull_request_reviews    = true
-    required_approving_review_count = 2
-    require_code_owner_reviews      = true
-  }
-}
-```
-
-### Modern (recommended):
-```hcl
-repository_rulesets = {
-  "main-protection" = {
-    target      = "branch"
-    enforcement = "active"
-    
-    conditions = {
-      ref_name = {
-        include = ["main"]
-      }
-    }
-    
-    rules = {
-      pull_request = {
-        required_approving_review_count = 2
-        require_code_owner_review       = true
-      }
-    }
-  }
-}
-```
 
 ## License
 

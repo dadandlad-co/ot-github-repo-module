@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------
-# OpenTofu Tests for GitHub Repository Module
+# OpenTofu Tests for GitHub Repository Module (FIXED)
 #----------------------------------------------------------------------------
 
 # Test basic repository creation
@@ -10,11 +10,11 @@ run "basic_repository_test" {
     name        = "test-repo-basic"
     description = "Test repository for basic functionality"
     visibility  = "private"
-    
+
     has_issues   = true
     has_projects = false
     has_wiki     = false
-    
+
     topics = ["test", "basic"]
   }
 
@@ -55,32 +55,32 @@ run "basic_repository_test" {
   }
 }
 
-# Test repository with branch protection
-run "branch_protection_test" {
+# Test repository with repository rulesets (modern branch protection)
+run "repository_rulesets_test" {
   command = plan
 
   variables {
     name        = "test-repo-protected"
-    description = "Test repository with branch protection"
+    description = "Test repository with repository rulesets"
     visibility  = "private"
-    
+
     repository_rulesets = {
       "main-protection" = {
         target      = "branch"
         enforcement = "active"
-        
+
         conditions = {
           ref_name = {
             include = ["main"]
           }
         }
-        
+
         rules = {
           pull_request = {
             required_approving_review_count = 1
             require_code_owner_review       = true
           }
-          
+
           required_status_checks = {
             required_checks = [
               {
@@ -89,7 +89,7 @@ run "branch_protection_test" {
             ]
             strict_required_status_checks_policy = true
           }
-          
+
           deletion = true
         }
       }
@@ -126,7 +126,7 @@ run "team_permissions_test" {
     name        = "test-repo-teams"
     description = "Test repository with team permissions"
     visibility  = "private"
-    
+
     team_permissions = {
       "developers" = "push"
       "admins"     = "admin"
@@ -158,7 +158,7 @@ run "repository_files_test" {
     name        = "test-repo-files"
     description = "Test repository with custom files"
     visibility  = "private"
-    
+
     repository_files = {
       ".github/CODEOWNERS" = {
         content = "* @team/maintainers\n"
@@ -200,7 +200,7 @@ run "environments_test" {
     name        = "test-repo-envs"
     description = "Test repository with environments"
     visibility  = "private"
-    
+
     environments = {
       "staging" = {
         wait_timer = 0
@@ -254,14 +254,14 @@ run "merge_settings_test" {
     name        = "test-repo-merge"
     description = "Test repository merge settings"
     visibility  = "private"
-    
+
     allow_merge_commit = false
     allow_squash_merge = true
     allow_rebase_merge = true
     allow_auto_merge   = true
-    
+
     delete_branch_on_merge = true
-    
+
     squash_merge_commit_title   = "PR_TITLE"
     squash_merge_commit_message = "COMMIT_MESSAGES"
   }
@@ -306,9 +306,9 @@ run "security_settings_test" {
     name        = "test-repo-security"
     description = "Test repository security settings"
     visibility  = "private"
-    
+
     vulnerability_alerts = true
-    
+
     security_and_analysis = {
       secret_scanning = {
         status = "enabled"
@@ -340,7 +340,7 @@ run "template_repository_test" {
     name        = "test-repo-template"
     description = "Test repository created from template"
     visibility  = "private"
-    
+
     template = {
       owner                = "dadandlad-co"
       repository           = "template-repo"
@@ -364,7 +364,7 @@ run "template_repository_test" {
 # Test validation failures
 run "validation_test" {
   command = plan
-  
+
   variables {
     name        = "Test-Invalid-Name-With-Capitals"
     description = "This should fail validation"

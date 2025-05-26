@@ -110,7 +110,7 @@ tasks:
     desc: Plan OpenTofu examples
     deps: [init]
     cmds:
-      - for: [basic, advanced, complete] 
+      - for: [basic, advanced, complete]
         cmd: |
           cd examples/{{.ITEM}}
           tofu plan
