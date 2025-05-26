@@ -1,3 +1,10 @@
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/dadandlad.co)
+
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
+[![OpenTofu Validate](https://github.com/dadandlad-co/ot-github-repo-module/actions/workflows/terraform-validate.yml/badge.svg)](https://github.com/dadandlad-co/ot-github-repo-module/actions/workflows/terraform-validate.yml)
+
 # OpenTofu GitHub Repository Module
 
 A comprehensive OpenTofu module for managing GitHub repositories with all the features you need for modern DevOps workflows.
@@ -576,3 +583,9 @@ Maintained by [dadandlad-co](https://github.com/dadandlad-co).
 ## Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md) for version history and changes.
+
+## Support
+
+- 🐛 **Issues**: [GitHub Issues](https://github.com/dadandlad-co/ot-github-repo-module/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/dadandlad-co/ot-github-repo-module/discussions)
+- ☕ **Support**: [Buy Me a Coffee](https://buymeacoffee.com/dadandlad.co)
